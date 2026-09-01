@@ -1,0 +1,80 @@
+# Official GHCR publisher for ghcr.io/stanislavmandrik621/aitomation-teamspace-bridge.
+# The package is linked to this public repo. The private monorepo GITHUB_TOKEN
+# cannot write_package (BRG-058). Monorepo teamspace-bridge-publish.yml syncs
+# source here; this workflow builds and pushes the image.
+#
+# This file is copied into the public repo on sync so forks can also build.
+
+name: publish-image
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/stanislavmandrik621/aitomation-teamspace-bridge
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tags
+        id: meta
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == v* ]]; then
+            echo "tags=${IMAGE_NAME}:${GITHUB_REF_NAME},${IMAGE_NAME}:latest" >> "$GITHUB_OUTPUT"
+          else
+            SHORT="$(git rev-parse --short HEAD)"
+            echo "tags=${IMAGE_NAME}:sha-${SHORT},${IMAGE_NAME}:latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: false
+
+      # GHCR defaults new packages to private - anonymous docker pull must work for customers.
+      - name: Make GHCR package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PKG='aitomation-teamspace-bridge'
+          CODE=$(curl -sS -o /tmp/vis.json -w '%{http_code}' -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/user/packages/container/${PKG}/visibility" \
+            -d '{"visibility":"public"}')
+          echo "visibility HTTP ${CODE}"
+          cat /tmp/vis.json || true
+          # 204 = ok; 404 = package not found yet (should not happen after push)
+          if [[ "${CODE}" != "204" && "${CODE}" != "200" ]]; then
+            echo "WARN: could not set package public (HTTP ${CODE}). Set visibility manually in GitHub Packages."
+            exit 0
+          fi

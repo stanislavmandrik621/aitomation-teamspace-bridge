@@ -1,0 +1,74 @@
+# Example only. Copy this file. Do not replace docker-compose.yml.
+# Two teams on one machine: two containers, two volumes, two host ports.
+# Fairness between teams is the host's job. Each service is one team.
+#
+# Start:  docker compose -f docker-compose.multi-team.example.yml up -d
+# Logs:   docker compose -f docker-compose.multi-team.example.yml logs -f
+# Stop:   docker compose -f docker-compose.multi-team.example.yml stop
+#
+# WARNING: do NOT use "docker compose down -v". The -v flag deletes the named
+# volumes, which is where every message, member, invite and record change
+# on each team lives.
+#
+# Never point both services at the same named volume. The server writes
+# .bridge.lock in the data folder and refuses a second process on that folder.
+
+services:
+  team-a:
+    image: ghcr.io/stanislavmandrik621/aitomation-teamspace-bridge:latest
+    container_name: teamspace-bridge-a
+    restart: unless-stopped
+    ports:
+      # First team. Keep 8788. Never use the desktop app's local API port.
+      - '8788:8788'
+    environment:
+      TEAMSPACE_BRIDGE_HOST: '0.0.0.0'
+      TEAMSPACE_BRIDGE_PORT: '8788'
+      TEAMSPACE_DATA_DIR: '/data'
+      # Own key per team. Losing or mixing keys looks like a lost data folder.
+      TEAMSPACE_AT_REST_KEY: '${TEAM_A_AT_REST_KEY:-}'
+    volumes:
+      - teamspace-data-a:/data
+    cpus: 1.0
+    mem_limit: 1g
+    mem_reservation: 512m
+    pids_limit: 64
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  team-b:
+    image: ghcr.io/stanislavmandrik621/aitomation-teamspace-bridge:latest
+    container_name: teamspace-bridge-b
+    restart: unless-stopped
+    ports:
+      # Second team on this machine. Container port stays 8788.
+      - '8789:8788'
+    environment:
+      TEAMSPACE_BRIDGE_HOST: '0.0.0.0'
+      TEAMSPACE_BRIDGE_PORT: '8788'
+      TEAMSPACE_DATA_DIR: '/data'
+      TEAMSPACE_AT_REST_KEY: '${TEAM_B_AT_REST_KEY:-}'
+    volumes:
+      - teamspace-data-b:/data
+    cpus: 1.0
+    mem_limit: 1g
+    mem_reservation: 512m
+    pids_limit: 64
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+        reservations:
+          memory: 512m
+
+volumes:
+  teamspace-data-a:
+  teamspace-data-b:

@@ -1,0 +1,33 @@
+{
+  "name": "@aitomation/bridge",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stanislavmandrik621/aitomation-teamspace-bridge.git"
+  },
+  "homepage": "https://github.com/stanislavmandrik621/aitomation-teamspace-bridge",
+  "type": "module",
+  "description": "Self-hosted Team Space team server for Modules-only CRM sync",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "tsx tests/data-dir-lock.ts && tsx tests/store-session-hash.ts && tsx tests/catchup-full-log.ts && tsx tests/brg-059-shared-full-scan.ts && tsx tests/brg-068-operator-metrics.ts && tsx tests/ops-frame-budget.ts && tsx tests/tls-hash-as-bearer.ts && tsx tests/members-page.ts && tsx tests/rate-limit-throughput.ts && tsx tests/slow-down-frame.ts && tsx tests/client-ip.ts && tsx tests/acks-invite-cancel.ts && tsx tests/at-rest-invite.ts && tsx tests/at-rest-blobs.ts && tsx tests/crm-blob-disk-total.ts && tsx tests/brg-069-stream-upload.ts && tsx tests/http-body-budget-per-member.ts && tsx tests/ws-peer-close.ts && tsx tests/chat-store.ts && tsx tests/chat-rate-limits.ts && tsx tests/chat-unread.ts && tsx tests/chat-rooms-acl.ts && tsx tests/chat-rooms-total-ceiling.ts && tsx tests/chat-room-path-dm-collision.ts && tsx tests/chat-meta-store.ts && tsx tests/chat-migrate.ts && tsx tests/chat-backup-paths.ts && tsx tests/chat-avatar-store.ts && tsx tests/chat-blob-gc.ts && tsx tests/chat-blob-total-bytes.ts && tsx tests/brg-074-unreadable-line-safety.ts && tsx tests/chat-blob-registry-durable-ack.ts && tsx tests/chat-tmp-sweep.ts && tsx tests/chat-history-torn-write.ts && tsx tests/ops-log-torn-write.ts && tsx tests/self-host-power-cut-docs.ts && tsx tests/self-host-several-teams-docs.ts && tsx tests/brg-067-append-ops-batch.ts && tsx tests/brg-068-stale-device-prune.ts && tsx tests/chat-history-fixwave1.ts && tsx tests/chat-history-append-idempotency.ts && tsx tests/chat-a-fixwave1.ts && tsx tests/chat-pin-authoritative.ts && tsx tests/chat-pin-multi.ts && tsx tests/queue-full-ceilings.ts && tsx tests/concurrency-pool.ts && tsx tests/yjs-room-flags.ts && tsx tests/yjs-room-peer-cap.ts && tsx tests/server-hardening-pins.ts && tsx tests/brg-066-serialize-once.ts && tsx tests/g16-no-workers.ts && tsx tests/docker-lockfile-pin.ts && tsx tests/wave2-brg-hardening.ts && tsx tests/health-page.ts && tsx tests/presence.ts && tsx tests/heartbeat-presence.ts && tsx tests/backup-store.ts && tsx tests/backup-zip.ts && tsx tests/joined-via-invite-id.ts && tsx tests/compose-share-password.ts && tsx tests/bridge-limits-alignment.ts && tsx tests/invite-gc.ts && tsx tests/portal-store.ts && tsx tests/chat-room-roles.ts && tsx tests/invite-admin-role.ts && tsx tests/limits-store.ts && tsx tests/chat-edit-window.ts && tsx tests/chat-seen-privacy.ts && tsx tests/chat-delete-peer-meta.ts && tsx tests/limits-public-chat-caps.ts && tsx tests/limits-cap-evict.ts && tsx tests/limits-route-reachability.ts && tsx tests/ephemeral-chat.ts && tsx tests/admin-recovery.ts && tsx tests/guest-page-render.ts && tsx tests/invite-legacy-expiry.ts && tsx tests/publish-workflow-ghcr.ts && tsx tests/self-host-chat-rooms-ceiling-docs.ts && tsx tests/self-host-presence-cap-docs.ts && tsx tests/brg-106-origin-role-stamp.ts && tsx tests/brg-107-chat-mutator-session-race.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

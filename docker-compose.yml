@@ -1,0 +1,72 @@
+# AItomation Team Space server - ready-to-run Docker setup.
+#
+# Start:    docker compose up -d
+# Logs:     docker compose logs -f
+# Upgrade:  docker compose pull && docker compose up -d
+# Stop:     docker compose stop      (keeps your data)
+#
+# WARNING: do NOT use "docker compose down -v". The -v flag deletes the named
+# volume below, which is where every message, member, invite and record change
+# on this server lives. Without it, "down" and "up" are safe: the volume is
+# named, so it survives the container being removed and recreated.
+
+services:
+  teamspace:
+    image: ghcr.io/stanislavmandrik621/aitomation-teamspace-bridge:latest
+    # To build from a local checkout instead of the published image, comment
+    # out the "image:" line above and uncomment these two lines:
+    # build:
+    #   context: .
+    container_name: teamspace-bridge
+    restart: unless-stopped
+    ports:
+      # Left side is the port on this machine, right side is inside the
+      # container. Change only the left side if 8788 is already in use.
+      - '8788:8788'
+    environment:
+      # 0.0.0.0 lets teammates on your network reach this server. Use
+      # 127.0.0.1 to keep it reachable only from this machine.
+      TEAMSPACE_BRIDGE_HOST: '0.0.0.0'
+      TEAMSPACE_BRIDGE_PORT: '8788'
+      # Must point at the mounted volume below. Everything the server keeps
+      # lives here, so pointing it anywhere else loses your team on restart.
+      TEAMSPACE_DATA_DIR: '/data'
+      # Strongly recommended. Encrypts members, invites, the change log and
+      # uploaded files on disk. Generate one with:
+      #   openssl rand -hex 32
+      # Set it BEFORE the first start - turning it on later cannot read data
+      # that was already written without it.
+      TEAMSPACE_AT_REST_KEY: '${TEAMSPACE_AT_REST_KEY:-}'
+      # Optional. Lets you get Admin access back if you lose the one computer
+      # that holds your login. Leave blank and the server generates a key on
+      # first start, saved to /data/admin-recovery.key inside the volume.
+      TEAMSPACE_ADMIN_RECOVERY_KEY: '${TEAMSPACE_ADMIN_RECOVERY_KEY:-}'
+      # Optional, for a secure wss:// address. Point both at certificate files
+      # you also mount into the container.
+      # TEAMSPACE_TLS_CERT_FILE: '/certs/fullchain.pem'
+      # TEAMSPACE_TLS_KEY_FILE: '/certs/privkey.pem'
+    volumes:
+      # Named volume. This is the one line that keeps your team alive across
+      # upgrades and container rebuilds - never remove it, and never replace
+      # it with a plain "/data" (that creates a throwaway volume that a
+      # rebuild abandons, and your server comes back up as a brand new team).
+      - teamspace-data:/data
+      # If you enabled TLS above, also mount your certificate folder:
+      # - ./certs:/certs:ro
+    # Starting limits for one team. Several teams means several containers
+    # (copy docker-compose.multi-team.example.yml). Do not set memory below 512m.
+    cpus: 1.0
+    mem_limit: 1g
+    mem_reservation: 512m
+    pids_limit: 64
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+        reservations:
+          memory: 512m
+
+volumes:
+  teamspace-data:
