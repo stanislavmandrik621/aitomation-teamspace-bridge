@@ -1,0 +1,52 @@
+{
+  "name": "@aitomation/bridge",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stanislavmandrik621/aitomation-teamspace-bridge.git"
+  },
+  "homepage": "https://github.com/stanislavmandrik621/aitomation-teamspace-bridge",
+  "type": "module",
+  "description": "Self-hosted Team Space server for shared Modules and custom project Playbooks",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test:chat-rename-permissions": "node --import tsx tests/chat-rename-permissions-live.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "test:chat-communication": "node --import tsx tests/chat-long-history-pagination.ts && node --import tsx tests/chat-four-room-delivery.ts",
+    "test:chat-mentions": "node --import tsx tests/chat-unread-mentions.ts && node --import tsx tests/chat-four-room-delivery.ts",
+    "test:independent-authority": "node --import tsx tests/independent-authority.ts",
+    "test:independent-authority:faults": "node --import tsx tests/independent-authority-faults.ts && node --import tsx tests/guest-token-retirement-checkpoint.ts",
+    "test:independent-authority:docker": "node --import tsx tests/docker-backup-access-rollback.ts",
+    "test:member-revocation": "node --import tsx tests/member-revocation.ts",
+    "test:backup-privacy": "node --import tsx tests/backup-http-races-live.ts",
+    "test:member-revocation:live": "node --import tsx tests/member-revocation-live.ts",
+    "verify:mail-server": "npm run build && node --import tsx tests/mail-server-live.ts && node --import tsx tests/mail-retention-http-real.ts",
+    "verify:mail-storage": "node --import tsx tests/mail-store-real.ts && node --import tsx tests/mail-store-failures-real.ts && node --import tsx tests/mail-store-query-real.ts && node --import tsx tests/mail-service-real.ts && node --import tsx tests/mail-owner-lifecycle-real.ts && node --import tsx tests/mail-mailbox-boundaries.ts && node --import tsx tests/mail-warmup-templates.ts && node --import tsx tests/mail-warmup-real.ts && node --import tsx tests/mail-retention-real.ts && node --import tsx tests/mail-warmup-retention-real.ts",
+    "clean": "rm -rf dist",
+    "test:content-access": "node --import tsx tests/content-access.ts && node --import tsx tests/content-access-enterprise.ts && node --import tsx tests/content-access-adversarial.ts && node --import tsx tests/content-cascade-authority.ts && node --import tsx tests/content-cascade-projection-live.ts && node --import tsx tests/access-revocation-audit-probe.ts && node --import tsx tests/revocation-enterprise-audit-live.ts",
+    "test:collaboration-audit": "node --import tsx tests/invite-concurrency-live.ts && node --import tsx tests/invite-additional-devices.ts && node --import tsx tests/invite-redemption-atomicity.ts && node --import tsx tests/chat-room-invite-concurrency.ts && node --import tsx tests/chat-room-invite-identities.ts && node --import tsx tests/chat-rooms-fsync-durability.ts && node --import tsx tests/field-access-projection.ts && node --import tsx tests/guest-field-acl-live.ts && node --import tsx tests/team-field-acl-storage.ts && node --import tsx tests/team-field-acl-cas-live.ts && node --import tsx tests/chat-async-authority-live.ts && node --import tsx tests/chat-identity-parity.ts && node --import tsx tests/chat-unread-isolation-durability.ts && node --import tsx tests/backup-path-identity-runtime.ts",
+    "test:content-access:capacity": "node --import tsx tests/revocation-enterprise-storage-audit.ts",
+    "test": "npm run test:chat-communication && npm run test:content-access && npm run test:collaboration-audit && tsx tests/admin-http-authority-live.ts && tsx tests/blob-upload-authority.ts && tsx tests/shared-device-acks.ts && tsx tests/chat-unsend-commit.ts && tsx tests/team-content-lock-store.ts && tsx tests/data-dir-lock.ts && tsx tests/store-session-hash.ts && node --import tsx tests/member-revocation.ts && tsx tests/catchup-full-log.ts && tsx tests/brg-059-shared-full-scan.ts && tsx tests/brg-068-operator-metrics.ts && tsx tests/ops-frame-budget.ts && tsx tests/tls-hash-as-bearer.ts && tsx tests/members-page.ts && tsx tests/rate-limit-throughput.ts && tsx tests/slow-down-frame.ts && tsx tests/client-ip.ts && tsx tests/acks-invite-cancel.ts && tsx tests/at-rest-invite.ts && tsx tests/at-rest-blobs.ts && tsx tests/crm-blob-disk-total.ts && tsx tests/brg-069-stream-upload.ts && tsx tests/http-body-budget-per-member.ts && tsx tests/ws-peer-close.ts && tsx tests/chat-store.ts && tsx tests/chat-rate-limits.ts && tsx tests/chat-unread.ts && tsx tests/chat-rooms-acl.ts && tsx tests/chat-rooms-total-ceiling.ts && tsx tests/chat-room-path-dm-collision.ts && tsx tests/chat-meta-store.ts && tsx tests/chat-migrate.ts && tsx tests/chat-backup-paths.ts && tsx tests/chat-avatar-store.ts && tsx tests/chat-blob-gc.ts && tsx tests/chat-blob-total-bytes.ts && tsx tests/brg-074-unreadable-line-safety.ts && tsx tests/chat-blob-registry-durable-ack.ts && tsx tests/chat-tmp-sweep.ts && tsx tests/chat-history-torn-write.ts && tsx tests/ops-log-torn-write.ts && tsx tests/self-host-power-cut-docs.ts && tsx tests/self-host-several-teams-docs.ts && tsx tests/brg-067-append-ops-batch.ts && tsx tests/brg-068-stale-device-prune.ts && tsx tests/chat-history-fixwave1.ts && tsx tests/chat-history-append-idempotency.ts && tsx tests/chat-explicit-room-isolation.ts && tsx tests/chat-backup-snapshot.ts && tsx tests/chat-a-fixwave1.ts && tsx tests/chat-pin-authoritative.ts && tsx tests/chat-pin-multi.ts && tsx tests/queue-full-ceilings.ts && tsx tests/concurrency-pool.ts && tsx tests/yjs-room-flags.ts && tsx tests/yjs-room-peer-cap.ts && tsx tests/yjs-compose-acl-revocation.ts && tsx tests/server-hardening-pins.ts && tsx tests/brg-066-serialize-once.ts && tsx tests/g16-no-workers.ts && tsx tests/docker-lockfile-pin.ts && tsx tests/wave2-brg-hardening.ts && tsx tests/health-page.ts && tsx tests/presence.ts && tsx tests/heartbeat-presence.ts && tsx tests/backup-store.ts && tsx tests/backup-zip.ts && tsx tests/joined-via-invite-id.ts && tsx tests/compose-share-password.ts && tsx tests/bridge-limits-alignment.ts && tsx tests/invite-gc.ts && tsx tests/portal-store.ts && tsx tests/chat-room-roles.ts && tsx tests/invite-admin-role.ts && tsx tests/limits-store.ts && tsx tests/chat-edit-window.ts && tsx tests/chat-seen-privacy.ts && tsx tests/chat-delete-peer-meta.ts && tsx tests/limits-public-chat-caps.ts && tsx tests/limits-cap-evict.ts && tsx tests/limits-route-reachability.ts && tsx tests/ephemeral-chat.ts && tsx tests/admin-recovery.ts && tsx tests/guest-page-render.ts && tsx tests/invite-legacy-expiry.ts && tsx tests/publish-workflow-ghcr.ts && tsx tests/self-host-chat-rooms-ceiling-docs.ts && tsx tests/self-host-presence-cap-docs.ts && tsx tests/brg-106-origin-role-stamp.ts && tsx tests/brg-107-chat-mutator-session-race.ts && node --import tsx tests/module-edit-presence.ts",
+    "test:presence:live": "node --import tsx tests/module-edit-presence-live.ts",
+    "test:collab:live": "node --import tsx tests/brg-109-origin-device-stamp.ts && node --import tsx tests/yjs-compose-acl-live.ts && node --import tsx tests/member-revocation-live.ts",
+    "test:chat-deep-gaps": "node --import tsx tests/chat-encrypted-backup-live.ts && node --import tsx tests/prune-device-activity-cost.ts",
+    "test:chat-extended": "node --import tsx tests/chat-storage-device-errors.ts && node --import tsx tests/chat-migration-interruption.ts && node --import tsx tests/chat-network-randomized-live.ts"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "yjs": "^13.6.32"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
