@@ -1,0 +1,264 @@
+/**
+ * Shared visual baseline for every guest-facing bridge page: public Module
+ * share views/forms, external portal forms, Compose client pack downloads,
+ * password/PIN/OTP gates, and the 404/410 not-found/gone pages.
+ *
+ * Guests receive one self-contained HTML document (no external assets, no
+ * webfonts, no CDN scripts), so the whole look lives in this one inline CSS
+ * string and every shell in server.ts embeds it via guestPageDocument().
+ * Uses the app's neutral surfaces and follows the guest's system appearance.
+ */
+
+/**
+ * TCC-FIX-SHARE-002 write twin: never `String(object)` into HTML. Shells
+ * interpolate labels and error copy; an object cell must not become
+ * "[object Object]".
+ */
+function guestPlainText(s: unknown): string {
+  if (s == null) return ''
+  if (typeof s === 'string') return s
+  if (typeof s === 'number' && Number.isFinite(s)) return String(s)
+  if (typeof s === 'boolean' || typeof s === 'bigint') return String(s)
+  if (Array.isArray(s)) {
+    const parts: string[] = []
+    for (let i = 0; i < s.length && i < 100; i += 1) {
+      const p = guestPlainText(s[i])
+      if (p) parts.push(p)
+    }
+    return parts.join(', ')
+  }
+  if (typeof s === 'object') {
+    const o = s as Record<string, unknown>
+    for (const key of ['name', 'label', 'title', 'display', 'value', 'id'] as const) {
+      const x = o[key]
+      if (typeof x === 'string' && x.trim()) return x
+      if (typeof x === 'number' && Number.isFinite(x)) return String(x)
+    }
+    return ''
+  }
+  return ''
+}
+
+/** Server-side HTML escape for the few strings the shells interpolate directly. */
+export function escGuestHtml(s: unknown): string {
+  return guestPlainText(s).replace(/[&<>"']/g, (c) => {
+    switch (c) {
+      case '&': return '&amp;'
+      case '<': return '&lt;'
+      case '>': return '&gt;'
+      case '"': return '&quot;'
+      default: return '&#39;'
+    }
+  })
+}
+
+export const GUEST_PAGE_CSS = `
+
+:root{color-scheme:light;--guest-bg:#fff;--guest-card:#fff;--guest-fg:#18181b;--guest-muted:#71717a;--guest-secondary:#3f3f46;--guest-border:#e4e4e7;--guest-divider:#e4e4e7;--guest-input:#fafafa;--guest-muted-bg:#f4f4f5;--guest-hover:#e4e4e7;--guest-accent:#007aff}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--guest-bg:#1d1d20;--guest-card:#222226;--guest-fg:#f4f4f6;--guest-muted:#a1a1aa;--guest-secondary:#d4d4d8;--guest-border:#343438;--guest-divider:#2c2c30;--guest-input:#202023;--guest-muted-bg:#27272a;--guest-hover:#343438;--guest-accent:#0a84ff}}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{width:100%;min-width:0;min-height:100%}
+body{margin:0;background:var(--guest-bg);color:var(--guest-fg);font:14px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+main{width:100%;max-width:none;margin:0;padding:20px 24px 32px;min-width:0}
+main.narrow{max-width:560px;margin:0 auto;padding:20px 20px 28px}
+a{color:var(--guest-accent,#007aff);text-decoration:none}
+a:hover{text-decoration:underline}
+h1{font-size:1.25rem;font-weight:600;margin:0;letter-spacing:-.01em}
+.page-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:0 0 4px}
+.crumb{color:var(--guest-muted);font-size:.8125rem}
+.hint{color:var(--guest-muted);font-size:.8125rem;margin:2px 0 20px}
+.muted{color:var(--guest-muted);font-size:.875rem}
+.err{color:#f87171;font-size:.875rem}
+.ok{color:#4ade80;font-size:.875rem}
+.card{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;padding:16px;margin-top:8px;width:100%;max-width:none}
+.card.table-card{padding:6px 0;width:100%;max-width:100%;min-width:0;overflow:hidden}
+.gate-wrap{display:flex;justify-content:center;padding-top:9vh}
+.gate{width:100%;max-width:400px;background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;padding:28px}
+.gate .muted{margin:8px 0 4px}
+button{font:inherit;font-weight:500;height:36px;padding:0 16px;border:0;border-radius:8px;background:var(--guest-accent,#3b82f6);color:#fff;cursor:pointer}
+button:hover{background:color-mix(in srgb,var(--guest-accent,#3b82f6) 88%,#000)}
+button:disabled{opacity:.55;cursor:default}
+.btn-block{display:block;width:100%;margin-top:14px}
+.btn-secondary{background:var(--guest-muted-bg);border:1px solid var(--guest-border);color:var(--guest-fg)}
+.btn-secondary:hover{background:var(--guest-hover)}
+label{display:block;font-size:.8125rem;color:var(--guest-secondary);margin-top:14px}
+input,select,textarea{font:inherit;width:100%;margin-top:6px;background:var(--guest-input);border:1px solid var(--guest-border);border-radius:8px;color:var(--guest-fg);padding:0 12px;height:36px}
+textarea{height:auto;min-height:84px;padding:9px 12px;resize:vertical}
+select{padding:0 10px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--guest-accent,#3b82f6);box-shadow:0 0 0 3px color-mix(in srgb,var(--guest-accent,#3b82f6) 22%,transparent)}
+input::placeholder,textarea::placeholder{color:#6b7280}
+input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:#3b82f6}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.req{color:#f87171;font-size:.75rem;margin-left:4px}
+.multi{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--guest-input);border:1px solid var(--guest-border);border-radius:999px;padding:5px 12px;font-size:.8125rem;color:var(--guest-fg);margin:0;width:auto;cursor:pointer}
+.chip input{width:14px;height:14px;margin:0}
+.pills{display:inline-flex;flex-wrap:wrap;gap:4px}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 10px;font-size:.75rem;line-height:1.5;white-space:nowrap}
+.pill-t0{background:rgba(59,130,246,.16);color:#93c5fd}
+.pill-t1{background:rgba(16,185,129,.16);color:#6ee7b7}
+.pill-t2{background:rgba(245,158,11,.16);color:#fcd34d}
+.pill-t3{background:rgba(168,85,247,.16);color:#d8b4fe}
+.pill-t4{background:rgba(236,72,153,.16);color:#f9a8d4}
+.pill-t5{background:rgba(148,163,184,.16);color:#cbd5e1}
+.pill-more{background:rgba(148,163,184,.12);color:var(--guest-muted)}
+.pill-yes{background:rgba(16,185,129,.16);color:#6ee7b7}
+.pill-no{background:rgba(148,163,184,.12);color:var(--guest-muted)}
+@media(prefers-color-scheme:light){.pill-t0{color:#1d4ed8}.pill-t1,.pill-yes{color:#047857}.pill-t2{color:#92400e}.pill-t3{color:#7e22ce}.pill-t4{color:#be185d}.pill-t5{color:#475569}}
+.cell-muted{color:#6b7280}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 2px}
+.toolbar .btn-secondary{margin-left:auto}
+.table-wrap,.pivot-wrap{overflow-x:auto;overflow-y:hidden;min-width:0;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#3a3e48 var(--guest-bg)}
+.table-wrap::-webkit-scrollbar,.pivot-wrap::-webkit-scrollbar{height:10px}
+.table-wrap::-webkit-scrollbar-thumb,.pivot-wrap::-webkit-scrollbar-thumb{background:#3a3e48;border-radius:999px}
+table{width:max-content;min-width:100%;border-collapse:collapse;font-size:.8125rem}
+th,td{text-align:left;padding:9px 16px;border-bottom:1px solid var(--guest-divider);vertical-align:top;white-space:nowrap}
+th{color:var(--guest-muted);font-weight:500;border-bottom:1px solid var(--guest-border)}
+.cell-wrap,td.cell-wrap{white-space:normal;overflow-wrap:anywhere;min-width:280px;max-width:360px}
+.cell-nowrap,td.cell-nowrap{white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.empty{text-align:center;color:var(--guest-muted);padding:40px 12px}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.row-card{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;padding:14px 18px}
+.row-title{font-weight:600;font-size:.875rem}
+.kv{display:flex;gap:10px;font-size:.8125rem;margin-top:6px}
+.kv-k{color:var(--guest-muted);flex:0 0 130px;min-width:0}
+.kv-v{flex:1;min-width:0;overflow-wrap:anywhere}
+.board,.date-board{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;overflow-y:hidden;align-items:flex-start;margin-top:12px;padding-bottom:8px;min-width:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#3a3e48 var(--guest-bg)}
+.lane{flex:0 0 272px;max-width:272px;background:var(--guest-muted-bg);border:1px solid var(--guest-border);border-radius:12px;padding:12px}
+.scrum-filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.scrum-filters button{border:1px solid var(--guest-border);background:var(--guest-card);color:var(--guest-fg);max-width:10rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.75rem;padding:5px 10px}
+.scrum-filters button[aria-pressed="true"]{border-color:var(--guest-accent);background:var(--guest-accent);color:#fff}
+.lane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8125rem;font-weight:600;margin:0 2px 4px;color:var(--guest-secondary)}
+.lane-head span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lane-count{flex:0 0 auto;color:var(--guest-muted);font-weight:500;font-size:.75rem;background:var(--guest-hover);border-radius:999px;padding:1px 8px}
+.board-card{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:10px;padding:10px 12px;margin-top:8px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.gallery-card{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;overflow:hidden}
+.gallery-img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--guest-input)}
+.gallery-ph{width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#14171c,var(--guest-input))}
+.gallery-title{padding:10px 12px;font-size:.875rem;font-weight:500}
+.dash{margin-top:12px}
+.dash-strip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0 4px}
+.dash-tiles{display:flex;flex-wrap:wrap;gap:10px}
+.dash-tile{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;padding:12px 16px;min-width:112px}
+.dash-tile-n{font-size:1.375rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.dash-tile-k{color:var(--guest-muted);font-size:.75rem;margin-top:2px}
+.chart-wrap,.dash,.tl,.sched,.board,.date-board,.gallery,.stack,.tree,.map-list{width:100%;max-width:none}
+.table-wrap,.pivot-wrap,.cal{width:100%;max-width:100%}
+.chart-wrap{width:100%;max-width:none;margin-top:12px;background:var(--guest-card);border:1px solid var(--guest-border);border-radius:12px;padding:16px 16px 8px}
+.chart-svg{display:block;width:100%;height:auto;max-height:min(70vh,720px)}
+.chart-pie,.chart-donut{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
+.chart-pie .chart-svg,.chart-donut .chart-svg{flex:1 1 280px;max-width:520px}
+.chart-pie .chart-legend,.chart-donut .chart-legend{flex:1 1 220px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:4px 4px 12px}
+.chart-legend-i{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--guest-secondary)}
+.chart-swatch{width:10px;height:10px;border-radius:2px;flex:0 0 auto}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(88px,1fr));gap:4px;margin-top:12px;width:100%;max-width:100%;overflow-x:auto;min-width:0;-webkit-overflow-scrolling:touch}
+.cal-dow{color:var(--guest-muted);font-size:.75rem;text-align:center;padding:6px 2px}
+.cal-day{background:var(--guest-card);border:1px solid var(--guest-border);border-radius:8px;min-height:92px;padding:6px;min-width:0}
+.cal-day.out{opacity:.45}
+.cal-day-n{color:var(--guest-muted);font-size:.75rem}
+.cal-item{font-size:.75rem;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pivot-wrap{margin-top:12px}
+.tl{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.tl-row{display:flex;gap:12px;align-items:center}
+.tl-lab{flex:0 0 180px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8125rem}
+.tl-track{flex:1;min-width:0;height:28px;background:var(--guest-muted-bg);border:1px solid var(--guest-border);border-radius:8px;position:relative}
+.tl-bar{position:absolute;top:4px;bottom:4px;border-radius:6px;background:#3b82f6;min-width:8px}
+.sched{margin-top:12px;display:flex;flex-direction:column;gap:8px;width:100%}
+.wl-track{height:8px;background:var(--guest-muted-bg);border:1px solid var(--guest-border);border-radius:999px;margin:6px 0 4px;overflow:hidden}
+.wl-bar{height:100%;background:#3b82f6;border-radius:999px;min-width:4px}
+.tree{padding:12px 16px}
+.tree-row{padding:6px 0}
+.tree details{margin:2px 0}
+.tree summary{list-style:none;cursor:pointer}
+.tree summary::-webkit-details-marker{display:none}
+.table-card tbody th[colspan]{background:var(--guest-muted-bg);font-weight:600;color:var(--guest-secondary)}
+.doc-body{margin-top:8px;color:var(--guest-secondary);font-size:.8125rem;white-space:normal;overflow-wrap:anywhere}
+.cal-undated{margin-top:12px}
+.brand{display:flex;align-items:center;gap:14px;margin:0 0 10px}
+.brand img{height:44px;width:auto;border-radius:8px;object-fit:contain}
+.tag{color:var(--guest-muted);font-size:.875rem;margin:2px 0 0}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.swatch{width:16px;height:16px;border-radius:4px;border:1px solid var(--guest-border)}
+.footer{color:var(--guest-muted);font-size:.75rem;margin-top:16px}
+@media (max-width:640px){
+main{padding:20px 12px 48px}
+.card{padding:16px}
+.gate{padding:22px}
+.kv{flex-direction:column;gap:2px}
+.kv-k{flex:none}
+.dash-tile{min-width:0;flex:1 1 calc(50% - 10px)}
+.tl-row{flex-direction:column;align-items:stretch}
+.tl-lab{flex:none}
+.cal-day{min-height:72px}
+.gallery{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.sched .tl-lab,.tl-lab{flex:none}
+}
+.guest-card-container{container-type:inline-size;width:100%;min-width:0}
+.guest-card-grid[data-grid-columns]{display:grid;grid-template-columns:minmax(0,1fr)}
+.gallery.guest-card-grid{gap:16px}
+@container (min-width:420px){.guest-card-grid[data-grid-columns]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (min-width:780px){.guest-card-grid[data-grid-columns="3"],.guest-card-grid[data-grid-columns="4"]{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (min-width:1040px){.guest-card-grid[data-grid-columns="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}}
+`
+
+/**
+ * Guest HTML (share / portal / compose / 404) must not be cached. Same URL
+ * also serves JSON when Accept is application/json, so Vary: Accept. JSON
+ * already used no-store; HTML without it left a Chart share painting the
+ * previous inline renderer (tiles + table) after the listener was rebuilt.
+ */
+export const GUEST_HTML_RESPONSE_HEADERS: Record<string, string> = {
+  'content-type': 'text/html; charset=utf-8',
+  'cache-control': 'no-store',
+  'pragma': 'no-cache',
+  'vary': 'Accept',
+}
+
+/**
+ * Wrap a guest page body (and optional inline script) in the shared shell
+ * document. `title` is escaped here; `bodyHtml`/`scriptJs` are trusted
+ * template output built by the callers in server.ts (everything dynamic in
+ * them is escaped at build time or client-side via esc()).
+ */
+export function guestPageDocument(args: {
+  title: string
+  bodyHtml: string
+  scriptJs?: string
+  narrow?: boolean
+}): string {
+  const script = args.scriptJs ? `<script>${args.scriptJs}</script>` : ''
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Cache-Control" content="no-store"/>
+<meta name="robots" content="noindex"/>
+<title>${escGuestHtml(args.title)}</title>
+<style>${GUEST_PAGE_CSS}</style>
+</head>
+<body>
+<main${args.narrow ? ' class="narrow"' : ''}>${args.bodyHtml}</main>
+${script}
+</body>
+</html>`
+}
+
+/**
+ * Styled static page for the guest 404/410 responses (share/portal/compose
+ * not found, revoked, expired). Same baseline as the live pages so a dead
+ * link still looks intentional. Message stays plain English, ASCII only.
+ */
+export function guestErrorPageHtml(title: string, message: string): string {
+  return guestPageDocument({
+    title,
+    narrow: true,
+    bodyHtml:
+      `<div class="gate-wrap"><div class="gate"><h1>${escGuestHtml(title)}</h1>` +
+      `<p class="muted" style="margin:10px 0 0">${escGuestHtml(message)}</p></div></div>`,
+  })
+}
