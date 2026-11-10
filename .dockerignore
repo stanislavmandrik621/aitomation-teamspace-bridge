@@ -1,0 +1,15 @@
+node_modules
+dist
+data
+tests
+docs
+.github
+.git
+.env
+.env.*
+!.env.example
+*.log
+docker-compose.yml
+docker-compose.multi-team.example.yml
+README.md
+LICENSE
